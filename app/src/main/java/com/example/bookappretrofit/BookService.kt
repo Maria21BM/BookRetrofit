@@ -5,7 +5,7 @@ import retrofit2.http.GET
 
 interface BookService {
 
-    @GET("/b/UP1D")
-    suspend fun getBooks() : Response<BookList>
+    @GET("/b/VUYS")
+    suspend fun getBooks() : Response<List<BookItem>>
 
 }

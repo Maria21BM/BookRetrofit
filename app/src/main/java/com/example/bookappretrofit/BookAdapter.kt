@@ -4,34 +4,37 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import android.widget.TextView
-import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.recyclerview.widget.RecyclerView
+import com.example.bookappretrofit.databinding.CardFictionalItemLayoutBinding
 import com.example.bookappretrofit.databinding.CardFinancialItemLayoutBinding
 import com.example.bookappretrofit.databinding.CardKidsItemLayoutBinding
-import com.example.bookappretrofit.databinding.CardSelfhelpItemLayoutBinding
 import com.example.bookappretrofit.databinding.LayoutEmptyBinding
 import com.squareup.picasso.Picasso
 
 class BookAdapter(
     var context: Context,
-    var bookList: ArrayList<BookItem>,
-    var onDetailsClickListener: OnDetailsClickListener
+//    var bookList: ArrayList<BookItem>,
+    var viewModel: BooksViewModel,
+    var onDetailsClickListener: OnDetailsClickListener,
+    var onDeleteClickListener: OnDeleteClickListener
 ) :
     RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     private lateinit var bindingFinancial: CardFinancialItemLayoutBinding
-    private lateinit var bindingSelfHelp: CardSelfhelpItemLayoutBinding
+    private lateinit var bindingFictional: CardFictionalItemLayoutBinding
     private lateinit var bindingKids: CardKidsItemLayoutBinding
     private lateinit var bindingEmpty: LayoutEmptyBinding
     var currentPosition: Int = -1
 
+    var bookList: ArrayList<BookItem> = ArrayList()
+
     companion object {
         const val VIEW_TYPE_NULL = -1
         const val VIEW_TYPE_FINANCE = 0
-        const val VIEW_TYPE_SELF_HELP = 1
+        const val VIEW_TYPE_FICTIONAL = 1
         const val VIEW_TYPE_KIDS = 2
         private const val CAMERA_PERMISSION_CODE = 1
         private const val CAMERA_REQUEST_CODE = 2
@@ -47,11 +50,11 @@ class BookAdapter(
                 )
                 FinancialBookViewHolder(bindingFinancial)
             }
-            VIEW_TYPE_SELF_HELP -> {
-                bindingSelfHelp = CardSelfhelpItemLayoutBinding.inflate(
+            VIEW_TYPE_FICTIONAL -> {
+                bindingFictional = CardFictionalItemLayoutBinding.inflate(
                     LayoutInflater.from(parent.context), parent, false
                 )
-                SelfHelpBookViewHolder(bindingSelfHelp)
+                SelfHelpBookViewHolder(bindingFictional)
             }
             VIEW_TYPE_KIDS -> {
                 bindingKids = CardKidsItemLayoutBinding.inflate(
@@ -72,13 +75,21 @@ class BookAdapter(
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         val bookItem = bookList[position]
-        when(holder) {
+        when (holder) {
             is FinancialBookViewHolder -> holder.bind(bookItem)
             is SelfHelpBookViewHolder -> holder.bind(bookItem)
             is KidsBookViewHolder -> holder.bind(bookItem)
             else -> {
                 throw IllegalArgumentException("Invalid view holder: ${holder.javaClass.simpleName}")
             }
+        }
+        holder.itemView.setOnClickListener {
+            onDetailsClickListener.onDetailsClick(bookItem)
+        }
+
+        holder.itemView.setOnLongClickListener {
+            onDeleteClickListener.onDeleteClick(position)
+            true
         }
     }
 
@@ -90,11 +101,13 @@ class BookAdapter(
         return if (bookList.isEmpty()) {
             VIEW_TYPE_NULL
         } else {
-            Log.d("Maria", "${bookList[position]} - $position")
-            when (bookList[position].bookType) {
-                BookType.FINANCE -> VIEW_TYPE_FINANCE
-                BookType.SELF_HELP_BOOK -> VIEW_TYPE_SELF_HELP
-                BookType.KIDS -> VIEW_TYPE_KIDS
+            return when (bookList[position].bookType) {
+                "Finance" -> VIEW_TYPE_FINANCE
+                "Fictional" -> VIEW_TYPE_FICTIONAL
+                "Kids" -> VIEW_TYPE_KIDS
+                else -> {
+                    VIEW_TYPE_KIDS
+                }
             }
         }
     }
@@ -107,12 +120,12 @@ class BookAdapter(
             Picasso.get().load(book.authorImage).into(bindingFinancial.authorImage)
             bindingFinancial.authorName.text = book.authorName
             bindingFinancial.isbn.text = book.isbn
-            bindingFinancial.bookType.text = book.bookType.type
+            bindingFinancial.bookType.text = book.bookType
 
             // Set Drawable Image inside Text View
             bindingFinancial.bookType.setCompoundDrawablesWithIntrinsicBounds(
                 BookTypeImage.getImage(
-                    book.bookType.type
+                    book.bookType
                 ), 0, 0, 0
             )
             bindingFinancial.favourite.isChecked = book.isFavourite
@@ -122,7 +135,12 @@ class BookAdapter(
                 book.isFavourite = isChecked
             }
 
-            bindingFinancial.description.text = book.description
+            bindingFinancial.details.setOnClickListener {
+                onDetailsClickListener.onDetailsClick(book)
+                bindingFinancial.description.text = book.description
+                bindingFinancial.description.visibility = View.VISIBLE
+            }
+
 
             // Set the expand button
             bindingFinancial.bookName.maxLines = if (book.isExpanded) Int.MAX_VALUE else 1
@@ -144,45 +162,45 @@ class BookAdapter(
         }
     }
 
-    inner class SelfHelpBookViewHolder(bindingSelfHelp: CardSelfhelpItemLayoutBinding) :
-        RecyclerView.ViewHolder(bindingSelfHelp.root) {
+    inner class SelfHelpBookViewHolder(bindingFictional: CardFictionalItemLayoutBinding) :
+        RecyclerView.ViewHolder(bindingFictional.root) {
         fun bind(book: BookItem) {
-            Picasso.get().load(book.bookImage).into(bindingSelfHelp.bookImage)
-            bindingSelfHelp.bookName.text = book.bookName
-            Picasso.get().load(book.authorImage).into(bindingSelfHelp.authorImage)
-            bindingSelfHelp.authorName.text = book.authorName
-            bindingSelfHelp.isbn.text = book.isbn
-            bindingSelfHelp.bookType.text = book.bookType.type
+            Picasso.get().load(book.bookImage).into(bindingFictional.bookImage)
+            bindingFictional.bookName.text = book.bookName
+            Picasso.get().load(book.authorImage).into(bindingFictional.authorImage)
+            bindingFictional.authorName.text = book.authorName
+            bindingFictional.isbn.text = book.isbn
+            bindingFictional.bookType.text = book.bookType
 
             // Set Drawable Image inside Text View
-            bindingSelfHelp.bookType.setCompoundDrawablesWithIntrinsicBounds(
+            bindingFictional.bookType.setCompoundDrawablesWithIntrinsicBounds(
                 BookTypeImage.getImage(
-                    book.bookType.type
+                    book.bookType
                 ), 0, 0, 0
             )
-            bindingSelfHelp.favourite.isChecked = book.isFavourite
+            bindingFictional.favourite.isChecked = book.isFavourite
 
             // Favourite
-            bindingSelfHelp.favourite.setOnCheckedChangeListener { _, isChecked ->
+            bindingFictional.favourite.setOnCheckedChangeListener { _, isChecked ->
                 book.isFavourite = isChecked
             }
 
-            bindingSelfHelp.description.text = book.description
+            bindingFictional.description.text = book.description
 
             // Set the expand button
-            bindingSelfHelp.bookName.maxLines = if (book.isExpanded) Int.MAX_VALUE else 1
-            bindingSelfHelp.bookName.setOnClickListener {
+            bindingFictional.bookName.maxLines = if (book.isExpanded) Int.MAX_VALUE else 1
+            bindingFictional.bookName.setOnClickListener {
                 handleExpandButton(layoutPosition)
             }
 
             // Delete Button click listener
-            bindingSelfHelp.delete.setOnClickListener {
+            bindingFictional.delete.setOnClickListener {
                 handleDeleteButton(layoutPosition)
             }
 
             // Share Button click listener
-            bindingSelfHelp.bookName.setOnClickListener {
-                handleShareButtonClick(bindingSelfHelp.bookName)
+            bindingFictional.bookName.setOnClickListener {
+                handleShareButtonClick(bindingFictional.bookName)
             }
 
             // Open Camera
@@ -197,12 +215,12 @@ class BookAdapter(
             Picasso.get().load(book.authorImage).into(bindingKids.authorImage)
             bindingKids.authorName.text = book.authorName
             bindingKids.isbn.text = book.isbn
-            bindingKids.bookType.text = book.bookType.type
+            bindingKids.bookType.text = book.bookType
 
             // Set Drawable Image inside Text View
             bindingKids.bookType.setCompoundDrawablesWithIntrinsicBounds(
                 BookTypeImage.getImage(
-                    book.bookType.type
+                    book.bookType
                 ), 0, 0, 0
             )
             bindingKids.favourite.isChecked = book.isFavourite
@@ -234,9 +252,10 @@ class BookAdapter(
         }
     }
 
-    inner class ViewHolderEmpty(bindingEmpty: LayoutEmptyBinding) : RecyclerView.ViewHolder(bindingEmpty.root)
+    inner class ViewHolderEmpty(bindingEmpty: LayoutEmptyBinding) :
+        RecyclerView.ViewHolder(bindingEmpty.root)
 
-    fun handleShareButtonClick(bookName: TextView){
+    fun handleShareButtonClick(bookName: TextView) {
         val title = bookName.text
         val intent = Intent(Intent.ACTION_SEND)
         intent.type = "text/plain"
@@ -246,15 +265,19 @@ class BookAdapter(
         context.startActivity(chooser)
     }
 
-    fun handleDeleteButton(position: Int){
-        bookList.removeAt(position)
-        notifyItemRemoved(position)
-        notifyItemRangeChanged(position, bookList.size)
+    fun handleDeleteButton(position: Int) {
+        viewModel.removeBook(position)
     }
 
-    fun handleExpandButton(position: Int){
+    fun handleExpandButton(position: Int) {
         bookList[position].isExpanded = !bookList[position].isExpanded
         notifyItemChanged(position)
+    }
+
+    fun addBooks(books: List<BookItem>) {
+        bookList.clear()
+        bookList.addAll(books)
+        notifyDataSetChanged()
     }
 
 }

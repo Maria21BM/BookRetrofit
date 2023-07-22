@@ -14,7 +14,7 @@ data class BookItem(
     var authorImage: String,
     var authorName: String,
     var isbn: String,
-    var bookType: BookType,
+    var bookType: String,
     //
     var imageFromCamera: Bitmap?,
     var description: String,
@@ -22,25 +22,14 @@ data class BookItem(
     var isExpanded: Boolean = false,
 ) : Parcelable
 
-enum class BookType(val type: String) {
-        FINANCE("Finance"),
-        SELF_HELP_BOOK("Self-Help Book"),
-        KIDS("Kids Book")
-}
-
 enum class BookTypeImage(val type: String, val imageResource: Int) {
-        FINANCE(
-                "Finance",
-                R.drawable.ic_financial
-        ),
-        SELF_HELP_BOOK("Self-Help Book", R.drawable.ic_self_improvement), KIDS(
-                "Kids Book",
-                R.drawable.ic_child
-        );
+    FINANCE("Finance", R.drawable.ic_financial),
+    FICTIONAL("Fictional", R.drawable.ic_self_improvement),
+    KIDS("Kids Book", R.drawable.ic_child);
 
-        companion object {
-                fun getImage(type: String): Int {
-                        return values().find { it.type == type }?.imageResource ?: R.drawable.ic_financial
-                }
-        }
+    companion object {
+         fun getImage(type: String): Int {
+                return values().find { it.type == type }?.imageResource ?: R.drawable.ic_financial
+         }
+    }
 }

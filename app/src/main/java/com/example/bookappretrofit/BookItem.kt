@@ -25,7 +25,7 @@ data class BookItem(
 enum class BookTypeImage(val type: String, val imageResource: Int) {
     FINANCE("Finance", R.drawable.ic_financial),
     FICTIONAL("Fictional", R.drawable.ic_self_improvement),
-    KIDS("Kids Book", R.drawable.ic_child);
+    KIDS("Kids", R.drawable.ic_child);
 
     companion object {
          fun getImage(type: String): Int {

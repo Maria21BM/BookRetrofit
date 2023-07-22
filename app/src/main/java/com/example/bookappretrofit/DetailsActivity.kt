@@ -29,7 +29,9 @@ class DetailsActivity : AppCompatActivity() {
         Picasso.get().load(book.authorImage).into(binding.authorImage)
         binding.authorName.text = book.authorName
         binding.isbn.text = book.isbn
-        binding.bookType.text = book.bookType.toString()
+        binding.bookType.text = book.bookType
+
+        binding.details.text = book.description
 
         // Adding call service
         binding.btnCall.setOnClickListener {

@@ -83,9 +83,9 @@ class BookAdapter(
                 throw IllegalArgumentException("Invalid view holder: ${holder.javaClass.simpleName}")
             }
         }
-        holder.itemView.setOnClickListener {
-            onDetailsClickListener.onDetailsClick(bookItem)
-        }
+//        holder.itemView.setOnClickListener {
+//            onDetailsClickListener.onDetailsClick(bookItem)
+//        }
 
         holder.itemView.setOnLongClickListener {
             onDeleteClickListener.onDeleteClick(position)
@@ -137,10 +137,8 @@ class BookAdapter(
 
             bindingFinancial.details.setOnClickListener {
                 onDetailsClickListener.onDetailsClick(book)
-                bindingFinancial.description.text = book.description
                 bindingFinancial.description.visibility = View.VISIBLE
             }
-
 
             // Set the expand button
             bindingFinancial.bookName.maxLines = if (book.isExpanded) Int.MAX_VALUE else 1
@@ -185,7 +183,10 @@ class BookAdapter(
                 book.isFavourite = isChecked
             }
 
-            bindingFictional.description.text = book.description
+            bindingFictional.details.setOnClickListener {
+                onDetailsClickListener.onDetailsClick(book)
+                bindingFictional.description.visibility = View.VISIBLE
+            }
 
             // Set the expand button
             bindingFictional.bookName.maxLines = if (book.isExpanded) Int.MAX_VALUE else 1
@@ -230,7 +231,11 @@ class BookAdapter(
                 book.isFavourite = isChecked
             }
 
-            bindingKids.description.text = book.description
+            bindingKids.details.setOnClickListener {
+                onDetailsClickListener.onDetailsClick(book)
+                bindingKids.description.visibility = View.VISIBLE
+            }
+
 
             // Set the expand button
             bindingKids.bookName.maxLines = if (book.isExpanded) Int.MAX_VALUE else 1
@@ -259,7 +264,7 @@ class BookAdapter(
         val title = bookName.text
         val intent = Intent(Intent.ACTION_SEND)
         intent.type = "text/plain"
-        intent.putExtra(Intent.EXTRA_TEXT, title)
+        intent.putExtra(Intent.EXTRA_TEXT, "Book Title: $title")
 
         val chooser = Intent.createChooser(intent, "Share using...")
         context.startActivity(chooser)

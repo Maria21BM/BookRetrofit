@@ -1,6 +1,8 @@
 package com.example.bookappretrofit
 
+import android.content.Context
 import android.content.Intent
+import android.net.ConnectivityManager
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
@@ -8,6 +10,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.example.bookappretrofit.databinding.ActivityMainBinding
+
 
 class MainActivity : AppCompatActivity(), OnDetailsClickListener, OnDeleteClickListener {
 
@@ -22,15 +25,41 @@ class MainActivity : AppCompatActivity(), OnDetailsClickListener, OnDeleteClickL
 
         viewModel = ViewModelProvider(this)[BooksViewModel::class.java]
 
-        viewModel.bookListLiveData.observe(this){
-            books -> bookAdapter.addBooks(books)
-            bookAdapter.notifyDataSetChanged()
-            checkListVisibility()
+        setUpRecyclerView()
+
+        binding.retry.root.setOnClickListener {
+            loadData()
         }
 
-        bookAdapter = BookAdapter(this, viewModel, this, this)
-        setUpRecyclerView()
-//        setUpObservers()
+        binding.empty.reload.setOnClickListener {
+            viewModel.getBooks()
+        }
+
+        loadData()
+    }
+
+    private fun checkInternetConnection(): Boolean {
+        var cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        var activeNetwork = cm.activeNetworkInfo
+        return activeNetwork != null && activeNetwork.isConnectedOrConnecting
+    }
+
+    private fun loadData() {
+        if (checkInternetConnection()) {
+            viewModel.getBooks()
+            viewModel.bookListLiveData.observe(this) { books ->
+                if (books != null) {
+                    bookAdapter.addBooks(books)
+//                bookAdapter.notifyDataSetChanged()
+                    checkListVisibility()
+                }
+            }
+            binding.retry.root.visibility = View.GONE
+            binding.recyclerView.visibility = View.VISIBLE
+        } else {
+            binding.retry.root.visibility = View.VISIBLE
+            binding.recyclerView.visibility = View.GONE
+        }
     }
 
     private fun checkListVisibility() {
@@ -50,15 +79,15 @@ class MainActivity : AppCompatActivity(), OnDetailsClickListener, OnDeleteClickL
 
     override fun onResume() {
         super.onResume()
-        viewModel.getBooks()
+        loadData()
     }
 
     private fun setUpRecyclerView() {
-        binding.recyclerView.layoutManager =
-            LinearLayoutManager(this)
+        binding.recyclerView.layoutManager = LinearLayoutManager(this)
         binding.recyclerView.apply {
             layoutManager = StaggeredGridLayoutManager(1, StaggeredGridLayoutManager.VERTICAL)
         }
+        bookAdapter = BookAdapter(this, viewModel, this, this)
         binding.recyclerView.adapter = bookAdapter
     }
 
